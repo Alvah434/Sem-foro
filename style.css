@@ -1,0 +1,76 @@
+body {
+
+    background-color: #1e1e1e;
+    color: white;
+    text-align: center;
+    font-family: Arial;
+
+}
+
+/* caja del semáforo */
+.semaforo {
+
+    width: 120px;
+    margin: 20px auto;
+    background: #333;
+    padding: 20px;
+    border-radius: 15px;
+
+}
+
+/* estilo base de cada luz */
+.luz {
+
+    width: 80px;
+    height: 80px;
+    background: #111;
+    border-radius: 50%;
+    margin: 10px auto;
+
+}
+
+/* rojo encendido */
+.rojoActivo {
+
+    background: red;
+
+}
+
+/* verde encendido */
+.verdeActivo {
+
+    background: lime;
+
+}
+
+button {
+
+    padding: 10px 20px;
+    font-size: 16px;
+
+}
+
+/* controles */
+.controls { margin: 10px auto; text-align: center; }
+.controls input { width: 100px; padding: 6px; margin: 0 8px; }
+.controls button { margin: 0 4px; }
+
+#countdown, #contador, #status { margin-top: 12px; }
+#tiempoRestante { font-weight: bold; }
+#count { font-weight: bold; }
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.hidden { display: none; }
+
+.extra-controls { margin-top: 8px; }
+.extra-controls button { margin: 0 6px; }
+
+#history { margin: 16px auto; max-width: 320px; text-align: left; background: #222; padding: 10px; border-radius: 8px; }
+#history h3 { margin: 0 0 8px 0; color: #fff; }
+#historyList { list-style: none; padding: 0; margin: 0 0 8px 0; max-height: 160px; overflow: auto; }
+#historyList li { padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ddd; font-size: 14px; }
+#historyTotal { font-weight: bold; color: #fff; }

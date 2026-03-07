@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Semáforo</title>
+
+    <!-- conecta el archivo de estilos -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<h1>Semáforo para fumar</h1>
+
+<!-- contenedor del semáforo -->
+<div class="semaforo">
+
+    <!-- luz roja -->
+    <div id="rojo" class="luz"></div>
+
+    <!-- luz verde -->
+    <div id="verde" class="luz"></div>
+
+</div>
+
+<!-- controles: tiempo, iniciar y reiniciar -->
+<div class="controls">
+    <label for="tiempo">Minutos:</label>
+    <input id="tiempo" type="number" min="1" placeholder="Minutos">
+    <button id="startBtn">Iniciar</button>
+    <button id="resetBtn">Reiniciar</button>
+</div>
+
+<!-- contador y estado -->
+<div id="countdown">Tiempo restante: <span id="tiempoRestante">--:--</span></div>
+<div id="contador">Fumadas: <span id="count">0</span></div>
+<div id="status" role="status" aria-live="polite"></div>
+
+<!-- botones adicionales -->
+<div class="extra-controls">
+    <button id="resetCounterBtn">Resetear contador</button>
+    <button id="clearHistoryBtn">Borrar historial</button>
+</div>
+
+<!-- historial de tiempos verdes del día -->
+<section id="history">
+    <h3>Historial (hoy)</h3>
+    <ul id="historyList"></ul>
+    <div id="historyTotal">Total hoy: <span id="historyTotalTime">00:00</span></div>
+</section>
+
+<!-- conecta el javascript -->
+<script src="script.js"></script>
+
+</body>
+</html>
