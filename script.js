@@ -163,12 +163,18 @@ function restaurarEstado() {
             encenderVerde()
         }
     } else if (estado === 'rojo') {
-        encenderRojo()
         const expirationStr = localStorage.getItem(EXPIRATION_KEY)
         if (expirationStr) {
             const expiration = parseInt(expirationStr, 10)
             const remaining = expiration - Date.now()
             if (remaining > 0) {
+                // restaurar estado rojo SIN llamar a encenderRojo() que sobrescribiría la expiración
+                limpiarLuces()
+                rojo.classList.add('rojoActivo')
+                if (countdownEl) countdownEl.classList.add('hidden')
+                tiempoRestanteEl.textContent = "--:--"
+                startBtn.disabled = true
+                disableControls(true) // mantener deshabilitado mientras hay temporizador
                 timerTimeout = setTimeout(() => {
                     encenderVerde()
                     setStatus('Semáforo en verde.')
@@ -176,13 +182,16 @@ function restaurarEstado() {
                     timerTimeout = null
                     guardarEstado('verde', null, Date.now())
                 }, remaining)
-                disableControls(true) // mantener deshabilitado si hay temporizador activo
             } else {
                 // si ya expiró, cambiar a verde
+                encenderRojo()
                 encenderVerde()
                 setStatus('Semáforo en verde.')
                 guardarEstado('verde', null, Date.now())
             }
+        } else {
+            // si no hay expiración pero estado es rojo, cambiar a verde
+            encenderRojo()
         }
     } else {
         // estado por defecto: verde
