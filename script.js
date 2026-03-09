@@ -10,6 +10,7 @@ const countEl = document.getElementById('count')
 const statusEl = document.getElementById('status')
 const resetCounterBtn = document.getElementById('resetCounterBtn')
 const clearHistoryBtn = document.getElementById('clearHistoryBtn')
+const resetAllBtn = document.getElementById('resetAllBtn')
 const historyListEl = document.getElementById('historyList')
 const historyTotalTimeEl = document.getElementById('historyTotalTime')
 
@@ -27,6 +28,12 @@ const STORAGE_KEY = 'smokeCount'
 let smokeCount = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10)
 countEl.textContent = smokeCount
 const HISTORY_KEY = 'greenHistory'
+
+// claves para persistir el estado del semáforo
+const ESTADO_KEY = 'semaforoEstado'
+const TIEMPO_RESTANTE_KEY = 'tiempoRestante'
+const GREEN_START_KEY = 'greenStart'
+const EXPIRATION_KEY = 'expirationTime'
 
 // --- funciones para controlar las luces ---
 function limpiarLuces() {
@@ -47,6 +54,9 @@ function encenderRojo() {
     }
     limpiarLuces()
     rojo.classList.add('rojoActivo')
+    tiempoRestanteEl.textContent = "--:--"
+    startBtn.disabled = true // deshabilitar iniciar en rojo
+    guardarEstado('rojo')
 }
 
 function encenderVerde() {
@@ -62,6 +72,8 @@ function encenderVerde() {
         const elapsed = Date.now() - greenStart
         tiempoRestanteEl.textContent = msToTime(elapsed)
     }, 250)
+    startBtn.disabled = false // habilitar iniciar en verde
+    guardarEstado('verde', null, greenStart)
 }
 
 // --- historial ---
@@ -114,6 +126,70 @@ function renderHistory() {
     historyTotalTimeEl.textContent = msToTime(total)
 }
 
+// --- persistencia del estado del semáforo ---
+function guardarEstado(estado, tiempoRestante = null, greenStart = null, expiration = null) {
+    localStorage.setItem(ESTADO_KEY, estado)
+    if (tiempoRestante !== null) {
+        localStorage.setItem(TIEMPO_RESTANTE_KEY, String(tiempoRestante))
+    } else {
+        localStorage.removeItem(TIEMPO_RESTANTE_KEY)
+    }
+    if (greenStart !== null) {
+        localStorage.setItem(GREEN_START_KEY, String(greenStart))
+    } else {
+        localStorage.removeItem(GREEN_START_KEY)
+    }
+    if (expiration !== null) {
+        localStorage.setItem(EXPIRATION_KEY, String(expiration))
+    } else {
+        localStorage.removeItem(EXPIRATION_KEY)
+    }
+}
+
+function restaurarEstado() {
+    const estado = localStorage.getItem(ESTADO_KEY)
+    if (estado === 'verde') {
+        const greenStartStr = localStorage.getItem(GREEN_START_KEY)
+        if (greenStartStr) {
+            greenStart = parseInt(greenStartStr, 10)
+            encenderVerde()
+            // reiniciar el intervalo para actualizar el contador
+            greenInterval = setInterval(() => {
+                const elapsed = Date.now() - greenStart
+                tiempoRestanteEl.textContent = msToTime(elapsed)
+            }, 250)
+        } else {
+            // si no hay greenStart, por defecto verde
+            encenderVerde()
+        }
+    } else if (estado === 'rojo') {
+        encenderRojo()
+        const expirationStr = localStorage.getItem(EXPIRATION_KEY)
+        if (expirationStr) {
+            const expiration = parseInt(expirationStr, 10)
+            const remaining = expiration - Date.now()
+            if (remaining > 0) {
+                timerTimeout = setTimeout(() => {
+                    encenderVerde()
+                    setStatus('Semáforo en verde.')
+                    disableControls(false)
+                    timerTimeout = null
+                    guardarEstado('verde', null, Date.now())
+                }, remaining)
+                disableControls(true) // mantener deshabilitado si hay temporizador activo
+            } else {
+                // si ya expiró, cambiar a verde
+                encenderVerde()
+                setStatus('Semáforo en verde.')
+                guardarEstado('verde', null, Date.now())
+            }
+        }
+    } else {
+        // estado por defecto: verde
+        encenderVerde()
+    }
+}
+
 function resetCounter() {
     smokeCount = 0
     localStorage.setItem(STORAGE_KEY, String(smokeCount))
@@ -125,6 +201,32 @@ function clearHistory() {
     localStorage.removeItem(HISTORY_KEY)
     renderHistory()
     setStatus('Historial borrado.')
+}
+
+function resetAll() {
+    // limpiar todos los temporizadores
+    if (timerTimeout) { clearTimeout(timerTimeout); timerTimeout = null }
+    if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null }
+    if (greenInterval) { clearInterval(greenInterval); greenInterval = null }
+
+    // limpiar localStorage
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(HISTORY_KEY)
+    localStorage.removeItem(ESTADO_KEY)
+    localStorage.removeItem(TIEMPO_RESTANTE_KEY)
+    localStorage.removeItem(GREEN_START_KEY)
+    localStorage.removeItem(EXPIRATION_KEY)
+
+    // resetear variables
+    smokeCount = 0
+    greenStart = null
+    lastGreenMs = 0
+
+    // reiniciar estado
+    countEl.textContent = smokeCount
+    encenderVerde()
+    renderHistory()
+    setStatus('Todo reseteado.')
 }
 
 // --- utilidades ---
@@ -143,7 +245,6 @@ function setStatus(message, isError = false) {
 
 function disableControls(disabled) {
     tiempoInput.disabled = disabled
-    startBtn.disabled = disabled
 }
 
 // --- lógica principal ---
@@ -165,6 +266,7 @@ function iniciar() {
 
         // convertimos a ms
         const tiempoMs = minutos * 60 * 1000
+        const expiration = Date.now() + tiempoMs
 
         // incrementar contador porque el usuario inició (fuma)
         smokeCount = (smokeCount || 0) + 1
@@ -199,6 +301,9 @@ function iniciar() {
             disableControls(false)
             timerTimeout = null
         }, tiempoMs)
+
+        // guardar estado con tiempo restante
+        guardarEstado('rojo', tiempoMs, null, expiration)
 
         setStatus('Temporizador iniciado y contador incrementado.')
     } catch (err) {
@@ -245,6 +350,7 @@ startBtn.addEventListener('click', iniciar)
 resetBtn.addEventListener('click', volverRojo)
 resetCounterBtn.addEventListener('click', resetCounter)
 clearHistoryBtn.addEventListener('click', clearHistory)
+resetAllBtn.addEventListener('click', resetAll)
 
 // accesibilidad: permitir Enter en el input para iniciar
 tiempoInput.addEventListener('keydown', (e) => {
@@ -253,7 +359,7 @@ tiempoInput.addEventListener('keydown', (e) => {
 
 // estado inicial: mostrar contador y empezar en verde
 countEl.textContent = smokeCount
-// al iniciar la página, ponemos en verde y empezamos a contar tiempo en verde
-encenderVerde()
+// al iniciar la página, restaurar el estado guardado o por defecto verde
+restaurarEstado()
 // renderizar historial al cargar
 renderHistory()

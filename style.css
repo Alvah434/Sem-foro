@@ -68,6 +68,7 @@ button:disabled {
 
 .extra-controls { margin-top: 8px; }
 .extra-controls button { margin: 0 6px; }
+#resetAllBtn { font-size: 12px; padding: 4px 8px; }
 
 #history { margin: 16px auto; max-width: 320px; text-align: left; background: #222; padding: 10px; border-radius: 8px; }
 #history h3 { margin: 0 0 8px 0; color: #fff; }
